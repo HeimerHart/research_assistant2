@@ -7,11 +7,11 @@ load_dotenv()
 
 
 # LLM configurations - Agent specific config
-model = os.getenv("RESEARCH_AGENT_LLM")
-temperature = float(os.getenv("RESEARCH_AGENT_TEMPERATURE"))
+model = os.getenv("RESEARCH_AGENT_LLM", "groq/llama-3.3-70b-versatile")
+temperature = float(os.getenv("RESEARCH_AGENT_TEMPERATURE", "0.2"))
 
 llm = LLM(
-    model="gpt-4o-mini",
+    model=model,
     temperature=temperature
 )
 
