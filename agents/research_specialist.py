@@ -11,7 +11,8 @@ model = os.getenv("RESEARCH_AGENT_LLM")
 temperature = float(os.getenv("RESEARCH_AGENT_TEMPERATURE"))
 
 llm = LLM(
-    model="gpt-4o-mini",
+    model="groq/llama-3.3-70b-versatile",
+    api_key=os.getenv("GROQ_API_KEY"),
     temperature=temperature
 )
 
