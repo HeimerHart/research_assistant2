@@ -27,6 +27,10 @@ writing_task = Task(
                 - Analysis and Insights
                 - Conclusions and Recommendations
                 - Sources and References
+
+                Cite claims inline as [1], [2] using ONLY the numbered sources in the research notes. End with a "References" section listing number, title, site, URL and date. Never add a source that is not in the notes. If a claim has no source, mark it "(unsourced)".
+
+                
                 """),
     expected_output="A comprehensive, well-structured report with executive summary and conclusions",
     context=[research_task, analysis_task],

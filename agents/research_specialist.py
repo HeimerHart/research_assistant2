@@ -3,15 +3,15 @@ from dotenv import load_dotenv
 from crewai import Agent, LLM
 from crewai_tools import SerperDevTool
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 # LLM configurations - Agent specific config
-model = os.getenv("RESEARCH_AGENT_LLM")
+model = os.getenv("RESEARCH_AGENT_LLM", "groq/openai/gpt-oss-120b")
 temperature = float(os.getenv("RESEARCH_AGENT_TEMPERATURE"))
 
 llm = LLM(
-    model="groq/llama-3.3-70b-versatile",
+    model="groq/openai/gpt-oss-120b",
     api_key=os.getenv("GROQ_API_KEY"),
     temperature=temperature
 )
@@ -23,8 +23,12 @@ research_specialist_agent = Agent(
                 "You are an expert research specialist with years of experience in information gathering "
                 "and fact-checking. You have a keen eye for reliable sources and can quickly identify the "
                 "most relevant and up-to-date information on any topic."
+                "Keep the entire summary under 200 words. Use at most 2 searches."
+                "Use ONLY the search tool you were given. Never call open_file, browser, or any other tool. Do not open URLs; rely on the search result snippets."
             ),
     llm=llm,
-    tools=[SerperDevTool()],
+    tools=[SerperDevTool(n_results=3)],         # was SerperDevTool()
+    max_iter=4,     
     verbose=True,
+
 )

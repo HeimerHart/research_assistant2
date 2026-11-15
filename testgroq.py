@@ -4,7 +4,7 @@ from crewai import LLM
 load_dotenv()
 
 llm = LLM(
-    model="groq/llama-3.3-70b-versatile",
+    model="groq/openai/gpt-oss-120b",
     temperature=0
 )
 
