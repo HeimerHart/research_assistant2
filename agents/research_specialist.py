@@ -8,11 +8,10 @@ load_dotenv(override=True)
 
 # LLM configurations - Agent specific config
 model = os.getenv("RESEARCH_AGENT_LLM", "groq/openai/gpt-oss-120b")
-temperature = float(os.getenv("RESEARCH_AGENT_TEMPERATURE"))
+temperature = float(os.getenv("RESEARCH_AGENT_TEMPERATURE", "0.2"))
 
 llm = LLM(
-    model="groq/openai/gpt-oss-120b",
-    api_key=os.getenv("GROQ_API_KEY"),
+    model=model,
     temperature=temperature
 )
 
@@ -30,5 +29,9 @@ research_specialist_agent = Agent(
     tools=[SerperDevTool(n_results=3)],         # was SerperDevTool()
     max_iter=4,     
     verbose=True,
+<<<<<<< HEAD
 
 )
+=======
+)
+>>>>>>> bd0ca9e73c3ac56ec748b99a0ae645ea76c432f5
