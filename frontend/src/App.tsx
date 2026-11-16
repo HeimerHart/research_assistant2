@@ -21,7 +21,12 @@ import {
   Send,
   Loader2,
   Trash2,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  Clock,
+  Star
 } from 'lucide-react';
 
 interface AcademicPaper {
@@ -32,6 +37,11 @@ interface AcademicPaper {
   published: string;
   source: string;
   venue?: string;
+  category?: string;
+  citations?: number;
+  downloads_estimate?: number;
+  rating_score?: number;
+  rating_badge?: string;
   pdf_url?: string;
   url?: string;
   doi?: string;
@@ -64,53 +74,73 @@ interface ChatMessage {
 
 const DEFAULT_FEATURED: AcademicPaper[] = [
   {
-    id: 'feat_1',
-    title: 'Quantum Supremacy & Post-Quantum Cryptography',
-    authors: 'DR. A. VANCE & L. BALUO',
-    abstract: 'Investigates lattice-based post-quantum algorithms against Shor algorithm fault-tolerant quantum computers.',
-    published: '2026-03-12',
+    id: 'openalex_W2741809807',
+    title: 'Attention Is All You Need',
+    authors: 'Ashish Vaswani, Noam Shazeer, Niki Parmar et al.',
+    abstract: 'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. We introduce the Transformer, a model architecture eschewing recurrence and instead relying entirely on an attention mechanism to draw global dependencies between input and output.',
+    published: '2017',
+    source: 'arXiv / NeurIPS',
+    venue: 'NeurIPS',
+    category: 'COMPUTING & AI',
+    citations: 136431,
+    downloads_estimate: 1845000,
+    rating_score: 4.98,
+    rating_badge: '★ 136.4k Citations • Top 0.01% Impact',
+    pdf_url: 'https://arxiv.org/pdf/1706.03762',
+    url: 'https://arxiv.org/abs/1706.03762',
+  },
+  {
+    id: 'openalex_W2964344401',
+    title: 'The Materials Project: A materials genome approach to accelerating materials innovation',
+    authors: 'Anubhav Jain, Shyue Ping Ong, Geoffroy Hautier et al.',
+    abstract: 'Accelerating the discovery and synthesis of advanced energy storage materials through high-throughput ab initio computing and accessible materials databases for solid-state battery electrolytes.',
+    published: '2013',
+    source: 'APL Materials',
+    venue: 'APL Materials',
+    category: 'ENERGY STORAGE',
+    citations: 13882,
+    downloads_estimate: 192000,
+    rating_score: 4.91,
+    rating_badge: '★ 13.9k Citations • Landmark Work',
+    pdf_url: 'https://pubs.aip.org/aip/apm/article-pdf/doi/10.1063/1.4812323/13180479/011002_1_online.pdf',
+    url: 'https://doi.org/10.1063/1.4812323',
+  },
+  {
+    id: 'openalex_W3123847291',
+    title: 'GPT-4 Technical Report',
+    authors: 'OpenAI, Josh Achiam, Steven Adler et al.',
+    abstract: 'We report the development of GPT-4, a large-scale, multimodal model which can accept image and text inputs and produce text outputs, demonstrating human-level performance across diverse academic and professional benchmarks.',
+    published: '2023',
     source: 'arXiv',
-    venue: 'Computing & Security',
-    pdf_url: 'https://arxiv.org/abs/2403.00001',
-    url: 'https://arxiv.org/abs/2403.00001',
+    venue: 'OpenAI Preprints',
+    category: 'AUTONOMOUS SYSTEMS',
+    citations: 38402,
+    downloads_estimate: 620000,
+    rating_score: 4.95,
+    rating_badge: '★ 38.4k Citations • Frontier AI',
+    pdf_url: 'https://arxiv.org/pdf/2303.08774',
+    url: 'https://arxiv.org/abs/2303.08774',
   },
   {
-    id: 'feat_2',
-    title: 'Solid-State Battery Electrolytes in Electric Mobility',
-    authors: 'DOROTHEA & SPINOCHIO',
-    abstract: 'Synthesizes sulfide-based solid electrolytes for extreme temperature commercial EV battery packs.',
-    published: '2026-02-18',
-    source: 'Zenodo',
-    venue: 'Energy Storage',
-    pdf_url: 'https://zenodo.org',
-    url: 'https://zenodo.org',
-  },
-  {
-    id: 'feat_3',
-    title: 'Multi-Agent Consensus & Emergent Alignment',
-    authors: 'J. H. JOHNSTON & LOK WA U',
-    abstract: 'Evaluates Game-Theoretic coordination across heterogeneous LLM multi-agent swarms.',
-    published: '2026-01-20',
-    source: 'OpenAlex',
-    venue: 'Autonomous Systems',
-    pdf_url: 'https://openalex.org',
-    url: 'https://openalex.org',
-  },
-  {
-    id: 'feat_4',
-    title: 'Decentralized Edge Robotics Navigation Without GPS',
-    authors: 'ALYSSAH TO & E. CHURCHILL',
-    abstract: 'Presents neuromorphic visual odometry for sub-surface exploration without global positioning satellites.',
-    published: '2025-11-14',
-    source: 'arXiv',
-    venue: 'Robotics & Space',
-    pdf_url: 'https://arxiv.org/abs/2402.00001',
-    url: 'https://arxiv.org/abs/2402.00001',
+    id: 'openalex_W2971275997',
+    title: 'nuScenes: A Multimodal Dataset for Autonomous Driving',
+    authors: 'Holger Caesar, Varun Bankiti, Alex H. Lang et al.',
+    abstract: 'We present nuScenes, the first public large-scale dataset for autonomous driving navigation with the full sensor suite (6 cameras, 1 lidar, 5 radars, GPS, IMU) and 360-degree coverage.',
+    published: '2020',
+    source: 'CVPR',
+    venue: 'IEEE / CVF CVPR',
+    category: 'ROBOTICS & SPACE',
+    citations: 7978,
+    downloads_estimate: 145000,
+    rating_score: 4.88,
+    rating_badge: '★ 7.9k Citations • Benchmark Standard',
+    pdf_url: 'https://openaccess.thecvf.com/content_CVPR_2020/papers/Caesar_nuScenes_A_Multimodal_Dataset_for_Autonomous_Driving_CVPR_2020_paper.pdf',
+    url: 'https://arxiv.org/abs/1903.11027',
   }
 ];
 
 const CARD_STYLES = [
-  { gradient: 'from-[#a5c4ec] via-[#cde2f8] to-[#9ebde8]', category: 'COMPUTING & SECURITY' },
+  { gradient: 'from-[#a5c4ec] via-[#cde2f8] to-[#9ebde8]', category: 'COMPUTING & AI' },
   { gradient: 'from-[#e8907f] via-[#f4a99b] to-[#dc7d6c]', category: 'ENERGY STORAGE' },
   { gradient: 'from-[#f4be7a] via-[#f7d49f] to-[#e8ab60]', category: 'AUTONOMOUS SYSTEMS' },
   { gradient: 'from-[#c1b5ea] via-[#ded7f7] to-[#b3a4e5]', category: 'ROBOTICS & SPACE' }
@@ -128,6 +158,19 @@ export default function App() {
   const [discovering, setDiscovering] = useState(false);
   const [discoveredPapers, setDiscoveredPapers] = useState<AcademicPaper[]>(DEFAULT_FEATURED);
   const [selectedPaperForModal, setSelectedPaperForModal] = useState<AcademicPaper | null>(null);
+
+  // Featured Literature Deck (Most Famous & Highly Cited Papers across Sciences)
+  const [featuredLiterature, setFeaturedLiterature] = useState<AcademicPaper[]>(() => {
+    try {
+      const saved = localStorage.getItem('switchlit_featured_papers');
+      return saved ? JSON.parse(saved) : DEFAULT_FEATURED;
+    } catch {
+      return DEFAULT_FEATURED;
+    }
+  });
+  const [featuredPage, setFeaturedPage] = useState<number>(0);
+  const [refreshingDeck, setRefreshingDeck] = useState<boolean>(false);
+  const [nextRefreshCountdown, setNextRefreshCountdown] = useState<string>('');
 
   const [logs, setLogs] = useState<string[]>([]);
   const [report, setReport] = useState<string | null>(null);
@@ -212,6 +255,64 @@ export default function App() {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages, isChatOpen]);
+
+  const updateCountdownDisplay = (expiresAtMs: number) => {
+    const diff = expiresAtMs - Date.now();
+    if (diff <= 0) {
+      setNextRefreshCountdown('due now');
+      return;
+    }
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    setNextRefreshCountdown(`${hours}h ${mins}m`);
+  };
+
+  const fetchFeaturedLiterature = async (force: boolean = false) => {
+    setRefreshingDeck(true);
+    try {
+      const res = await fetch(`/api/academic/featured?force=${force}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.papers && data.papers.length > 0) {
+          setFeaturedLiterature(data.papers);
+          const now = Date.now();
+          const ttlMs = (data.expires_in_seconds || 21600) * 1000;
+          const expiresAt = now + ttlMs;
+          localStorage.setItem('switchlit_featured_papers', JSON.stringify(data.papers));
+          localStorage.setItem('switchlit_featured_expires_at', String(expiresAt));
+          updateCountdownDisplay(expiresAt);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching featured literature', e);
+    } finally {
+      setRefreshingDeck(false);
+    }
+  };
+
+  // Automatic 6-Hour Refresh Cycle
+  useEffect(() => {
+    const savedExpires = localStorage.getItem('switchlit_featured_expires_at');
+    const now = Date.now();
+
+    if (!savedExpires || now >= Number(savedExpires)) {
+      fetchFeaturedLiterature(false);
+    } else {
+      updateCountdownDisplay(Number(savedExpires));
+    }
+
+    // Interval to refresh countdown display and trigger fetch if 6 hours elapsed
+    const timer = setInterval(() => {
+      const exp = Number(localStorage.getItem('switchlit_featured_expires_at')) || 0;
+      if (Date.now() >= exp) {
+        fetchFeaturedLiterature(false);
+      } else {
+        updateCountdownDisplay(exp);
+      }
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Step 1: Discover candidate papers from arXiv, Zenodo & OpenAlex
   const handleDiscover = async (searchQuery: string) => {
@@ -504,35 +605,80 @@ export default function App() {
               )}
             </button>
           </form>
+          {discovering && (
+            <p className="text-[11px] font-mono text-emerald-800 mt-2.5 flex items-center justify-center gap-1.5 animate-pulse">
+              <Loader2 className="w-3 h-3 animate-spin" /> Retrieving open-access preprints across arXiv, Zenodo & OpenAlex...
+            </p>
+          )}
         </div>
       </section>
 
       {/* Featured Research Papers Section (Direct visual match with user image) */}
       <section className="max-w-6xl mx-auto px-8 w-full mt-4 mb-8">
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#111110]">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-[#111110] gap-3">
+          <div className="flex items-center gap-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-black">
               Featured Inquiries & Research Literature
             </h3>
-            {discovering && (
-              <span className="text-[11px] font-mono text-emerald-700 flex items-center gap-1 animate-pulse">
-                <Loader2 className="w-3 h-3 animate-spin" /> Searching arXiv & Zenodo...
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#666660] bg-[#f2f2ed] border border-[#dcdcd4] px-2 py-0.5 rounded-full">
+              <Clock className="w-3 h-3 text-[#555550]" />
+              <span>6H AUTO-REFRESH</span>
+              {nextRefreshCountdown && (
+                <span className="text-[#888880]">({nextRefreshCountdown})</span>
+              )}
+            </div>
+            {refreshingDeck && (
+              <span className="text-[11px] font-mono text-emerald-800 flex items-center gap-1 animate-pulse">
+                <Loader2 className="w-3 h-3 animate-spin" /> Fetching top-cited papers...
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
+
+          <div className="flex items-center gap-2">
+            {/* 6h Manual Refresh Button */}
             <button
-              onClick={() => handleDiscover(topic || 'Machine Learning')}
-              className="text-[11px] font-mono text-[#666660] hover:text-black px-2 py-0.5 border border-[#d8d8d2] rounded"
+              onClick={() => fetchFeaturedLiterature(true)}
+              disabled={refreshingDeck}
+              className="text-[11px] font-mono text-[#555550] hover:text-black px-2.5 py-1 border border-[#d8d8d2] rounded hover:bg-[#f0f0eb] transition-all flex items-center gap-1.5 disabled:opacity-50"
+              title="Query OpenAlex & arXiv for live top papers and restart 6h cycle"
             >
-              Refresh Deck
+              <RefreshCw className={`w-3 h-3 ${refreshingDeck ? 'animate-spin text-black' : ''}`} />
+              <span>{refreshingDeck ? 'Refreshing...' : 'Refresh Deck'}</span>
             </button>
+
+            {/* Pagination Navigation Arrows (Direct match with reference image) */}
+            <div className="flex items-center gap-1 border border-[#d8d8d2] rounded p-0.5 bg-white">
+              <button
+                onClick={() => {
+                  const maxPages = Math.ceil(featuredLiterature.length / 4) || 1;
+                  setFeaturedPage((prev) => (prev > 0 ? prev - 1 : maxPages - 1));
+                }}
+                className="p-1 hover:bg-[#efefe9] rounded text-black transition-colors"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] font-mono px-1.5 text-[#666660]">
+                {featuredPage + 1}/{Math.ceil(featuredLiterature.length / 4) || 1}
+              </span>
+              <button
+                onClick={() => {
+                  const maxPages = Math.ceil(featuredLiterature.length / 4) || 1;
+                  setFeaturedPage((prev) => (prev + 1 < maxPages ? prev + 1 : 0));
+                }}
+                className="p-1 hover:bg-[#efefe9] rounded text-black transition-colors"
+                title="Next page"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {discoveredPapers.slice(0, 4).map((paper, idx) => {
+          {featuredLiterature.slice(featuredPage * 4, (featuredPage + 1) * 4).map((paper, idx) => {
             const style = CARD_STYLES[idx % CARD_STYLES.length];
+            const categoryLabel = paper.category || style.category;
             return (
               <motion.div
                 key={paper.id || idx}
@@ -545,23 +691,46 @@ export default function App() {
                   className={`h-64 rounded-xl border border-black/15 overflow-hidden relative shadow-sm transition-shadow group-hover:shadow-md bg-gradient-to-b ${style.gradient} p-4 flex flex-col justify-between`}
                 >
                   <div className="absolute inset-0 opacity-15 pointer-events-none bg-[repeating-linear-gradient(0deg,transparent,transparent_8px,#000_8px,#000_16px)]" />
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-black/80 bg-white/50 px-2 py-0.5 rounded backdrop-blur-sm self-start">
-                    {paper.source || style.category}
-                  </span>
+                  
+                  {/* Top Badges: Category & Year */}
+                  <div className="flex items-center justify-between z-10 w-full gap-1">
+                    <span className="text-[9.5px] font-mono uppercase tracking-widest text-black/85 bg-white/70 px-2 py-0.5 rounded backdrop-blur-sm truncate max-w-[130px]">
+                      {categoryLabel}
+                    </span>
+                    <span className="text-[9px] font-mono text-black/75 bg-white/60 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                      {paper.published}
+                    </span>
+                  </div>
 
-                  <div className="w-8 h-8 rounded-full bg-white/80 border border-black/20 flex items-center justify-center text-black/70 self-end group-hover:bg-white transition-colors">
+                  {/* Prominent Citations & Downloads Metric Pill */}
+                  {paper.citations ? (
+                    <div className="z-10 bg-black/85 text-white backdrop-blur-sm px-2.5 py-1.5 rounded-lg text-[10px] font-mono self-start flex items-center gap-1.5 shadow-sm">
+                      <Star className="w-3 h-3 fill-amber-300 text-amber-300" />
+                      <span className="font-semibold">{paper.citations.toLocaleString()}</span>
+                      <span className="text-white/70 text-[9px]">citations</span>
+                    </div>
+                  ) : null}
+
+                  {/* Bookmark Button */}
+                  <div className="w-8 h-8 rounded-full bg-white/80 border border-black/20 flex items-center justify-center text-black/70 self-end group-hover:bg-white transition-colors z-10">
                     <Bookmark className="w-3.5 h-3.5" />
                   </div>
                 </div>
 
-                {/* Caption */}
+                {/* Caption & Metadata */}
                 <div className="mt-2.5">
-                  <h4 className="text-[13px] font-semibold text-black tracking-tight group-hover:underline line-clamp-1">
+                  <h4 className="text-[13px] font-semibold text-black tracking-tight group-hover:underline line-clamp-1" title={paper.title}>
                     {paper.title}
                   </h4>
-                  <p className="text-[10px] font-mono text-[#666660] uppercase mt-0.5 truncate">
+                  <p className="text-[10.5px] font-mono text-[#666660] uppercase mt-0.5 truncate">
                     written by {paper.authors}
                   </p>
+                  <div className="flex items-center justify-between text-[9.5px] font-mono text-[#888880] mt-1">
+                    <span className="truncate max-w-[140px]">{paper.source || paper.venue || 'Academic Index'}</span>
+                    {paper.rating_badge && (
+                      <span className="text-emerald-800 font-semibold truncate ml-1">{paper.rating_badge.split('•')[0]}</span>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             );
@@ -804,10 +973,28 @@ export default function App() {
             >
               <div className="flex items-start justify-between pb-3 border-b border-[#e5e5df] mb-4">
                 <div>
-                  <span className="text-[10px] font-mono font-bold bg-[#d8f3dc] text-[#1b4332] px-2 py-0.5 rounded-full uppercase">
-                    {selectedPaperForModal.source}
-                  </span>
-                  <h3 className="font-serif text-2xl text-black mt-2 leading-tight">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                    <span className="text-[10px] font-mono font-bold bg-[#d8f3dc] text-[#1b4332] px-2 py-0.5 rounded-full uppercase">
+                      {selectedPaperForModal.source || 'Open Access'}
+                    </span>
+                    {selectedPaperForModal.category && (
+                      <span className="text-[10px] font-mono font-medium bg-[#f0f0eb] text-[#333330] px-2 py-0.5 rounded-full uppercase">
+                        {selectedPaperForModal.category}
+                      </span>
+                    )}
+                    {selectedPaperForModal.citations !== undefined && (
+                      <span className="text-[10px] font-mono bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                        <Star className="w-3 h-3 fill-amber-600 text-amber-600" />
+                        {selectedPaperForModal.citations.toLocaleString()} Citations
+                      </span>
+                    )}
+                    {selectedPaperForModal.rating_badge && (
+                      <span className="text-[10px] font-mono bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-full font-medium">
+                        {selectedPaperForModal.rating_badge.split('•')[0]}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-serif text-2xl text-black mt-1 leading-tight">
                     {selectedPaperForModal.title}
                   </h3>
                   <p className="text-xs font-mono text-[#666660] mt-1">

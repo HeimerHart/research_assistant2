@@ -57,7 +57,7 @@ try:
 except Exception:
     pass
 
-from academic_rag.academic_discovery import discover_academic_papers
+from academic_rag.academic_discovery import discover_academic_papers, get_featured_literature
 from academic_rag.rag_engine import ingest_papers_into_rag, global_rag_index
 
 app = FastAPI(
@@ -108,6 +108,20 @@ def get_config_status():
         analyst_agent_llm=os.getenv("ANALYST_AGENT_LLM", "groq/qwen/qwen3.8-27b"),
         writer_agent_llm=os.getenv("WRITER_AGENT_LLM", "groq/qwen/qwen3.8-27b")
     )
+
+
+@app.get("/api/academic/featured")
+def get_featured_literature_endpoint(force: bool = False):
+    """
+    Returns the most famous, highly cited academic papers across foundational scientific domains.
+    Cached for 6 hours; force=True forces a live refresh.
+    """
+    try:
+        data = get_featured_literature(force_refresh=force)
+        return data
+    except Exception as e:
+        print(f"[AcademicDiscovery] Error in featured endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/academic/discover")
