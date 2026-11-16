@@ -29,9 +29,4 @@ research_specialist_agent = Agent(
     tools=[SerperDevTool(n_results=3)],         # was SerperDevTool()
     max_iter=4,     
     verbose=True,
-<<<<<<< HEAD
-
 )
-=======
-)
->>>>>>> bd0ca9e73c3ac56ec748b99a0ae645ea76c432f5
