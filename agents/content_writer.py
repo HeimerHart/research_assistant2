@@ -19,8 +19,9 @@ content_writer_agent = Agent(
                 "You are a professional content writer with expertise in creating "
                 "clear, engaging, and well-structured documents. You can transform complex "
                 "information into accessible and compelling content."
+                "Keep the analysis under 200 words."
             ),
     llm=llm,
-    tools=[FileWriterTool()],
+    tools=[],
     verbose=True,
 )

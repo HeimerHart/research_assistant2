@@ -19,6 +19,7 @@ data_analyst_agent = Agent(
                 "You are a skilled data analyst with expertise in synthesizing complex "
                 "information into actionable insights. You excel at identifying patterns, trends, "
                 "and key findings from research data."
+                "Keep the analysis under 200 words."
             ),
     llm=llm,
     tools=[FileReadTool()],

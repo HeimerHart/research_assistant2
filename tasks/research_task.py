@@ -22,6 +22,12 @@ research_task = Task(
                 - Expert opinions
                 - Recent developments
                 - Reliable sources used
+                
+                Use ONLY the search tool you were given. Never call open_file, browser, or any other tool. Do not open URLs; rely on the search result snippets.
+
+                Number every source you use as [1], [2], ... For each, record: title, site/publisher, the URL exactly as returned by the search tool, publication date if shown, and the specific claim it supports. Never invent a source, author, date or URL. If a detail is not in the search results, write "not available".
+
+
                 """),
     expected_output="A comprehensive research summary with key findings, statistics, expert opinions, recent developments, and sources",
     output_file="research_findings.md"
