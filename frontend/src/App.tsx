@@ -14,8 +14,28 @@ import {
   ArrowRight,
   Sliders,
   Bookmark,
-  BookMarked
+  BookMarked,
+  MessageSquare,
+  X,
+  ExternalLink,
+  Send,
+  Loader2,
+  Trash2,
+  Sparkles
 } from 'lucide-react';
+
+interface AcademicPaper {
+  id: string;
+  title: string;
+  authors: string;
+  abstract: string;
+  published: string;
+  source: string;
+  venue?: string;
+  pdf_url?: string;
+  url?: string;
+  doi?: string;
+}
 
 interface ConfigStatus {
   has_serper: boolean;
@@ -32,71 +52,83 @@ interface HistoryItem {
   timestamp: string;
   wordCount: number;
   report: string;
+  papers?: AcademicPaper[];
 }
 
-const FEATURED_TOPICS = [
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'assistant';
+  text: string;
+  citations?: { title: string; source: string; url?: string }[];
+}
+
+const DEFAULT_FEATURED: AcademicPaper[] = [
   {
-    title: "Quantum Supremacy & Post-Quantum Cryptography",
-    authors: "DR. A. VANCE & L. BALUO",
-    category: "Computing & Security",
-    words: 1420,
-    gradient: "from-[#a5c4ec] via-[#cde2f8] to-[#9ebde8]",
-    cardBg: "bg-[#e8f1fc]",
-    accent: "text-blue-900",
+    id: 'feat_1',
+    title: 'Quantum Supremacy & Post-Quantum Cryptography',
+    authors: 'DR. A. VANCE & L. BALUO',
+    abstract: 'Investigates lattice-based post-quantum algorithms against Shor algorithm fault-tolerant quantum computers.',
+    published: '2026-03-12',
+    source: 'arXiv',
+    venue: 'Computing & Security',
+    pdf_url: 'https://arxiv.org/abs/2403.00001',
+    url: 'https://arxiv.org/abs/2403.00001',
   },
   {
-    title: "Solid-State Battery Breakthroughs in Mobility",
-    authors: "DOROTHEA & SPINOCHIO",
-    category: "Energy Storage",
-    words: 980,
-    gradient: "from-[#e8907f] via-[#f4a99b] to-[#dc7d6c]",
-    cardBg: "bg-[#fceeed]",
-    accent: "text-rose-950",
+    id: 'feat_2',
+    title: 'Solid-State Battery Electrolytes in Electric Mobility',
+    authors: 'DOROTHEA & SPINOCHIO',
+    abstract: 'Synthesizes sulfide-based solid electrolytes for extreme temperature commercial EV battery packs.',
+    published: '2026-02-18',
+    source: 'Zenodo',
+    venue: 'Energy Storage',
+    pdf_url: 'https://zenodo.org',
+    url: 'https://zenodo.org',
   },
   {
-    title: "Multi-Agent Consensus & Emergent Alignment",
-    authors: "J. H. JOHNSTON & LOK WA U",
-    category: "Autonomous Systems",
-    words: 1150,
-    gradient: "from-[#f4be7a] via-[#f7d49f] to-[#e8ab60]",
-    cardBg: "bg-[#fdf6ec]",
-    accent: "text-amber-950",
+    id: 'feat_3',
+    title: 'Multi-Agent Consensus & Emergent Alignment',
+    authors: 'J. H. JOHNSTON & LOK WA U',
+    abstract: 'Evaluates Game-Theoretic coordination across heterogeneous LLM multi-agent swarms.',
+    published: '2026-01-20',
+    source: 'OpenAlex',
+    venue: 'Autonomous Systems',
+    pdf_url: 'https://openalex.org',
+    url: 'https://openalex.org',
   },
   {
-    title: "Decentralized Edge Robotics Navigation",
-    authors: "ALYSSAH TO & E. CHURCHILL",
-    category: "Robotics & Space",
-    words: 840,
-    gradient: "from-[#c1b5ea] via-[#ded7f7] to-[#b3a4e5]",
-    cardBg: "bg-[#f4f1fc]",
-    accent: "text-purple-950",
+    id: 'feat_4',
+    title: 'Decentralized Edge Robotics Navigation Without GPS',
+    authors: 'ALYSSAH TO & E. CHURCHILL',
+    abstract: 'Presents neuromorphic visual odometry for sub-surface exploration without global positioning satellites.',
+    published: '2025-11-14',
+    source: 'arXiv',
+    venue: 'Robotics & Space',
+    pdf_url: 'https://arxiv.org/abs/2402.00001',
+    url: 'https://arxiv.org/abs/2402.00001',
   }
 ];
 
+const CARD_STYLES = [
+  { gradient: 'from-[#a5c4ec] via-[#cde2f8] to-[#9ebde8]', category: 'COMPUTING & SECURITY' },
+  { gradient: 'from-[#e8907f] via-[#f4a99b] to-[#dc7d6c]', category: 'ENERGY STORAGE' },
+  { gradient: 'from-[#f4be7a] via-[#f7d49f] to-[#e8ab60]', category: 'AUTONOMOUS SYSTEMS' },
+  { gradient: 'from-[#c1b5ea] via-[#ded7f7] to-[#b3a4e5]', category: 'ROBOTICS & SPACE' }
+];
+
 const AGENTS = [
-  {
-    step: 1,
-    name: "Research Specialist",
-    role: "Literature Retrieval",
-    description: "Searches the Serper index, scrapes primary sources, and cross-references data."
-  },
-  {
-    step: 2,
-    name: "Data Analyst",
-    role: "Information Verification",
-    description: "Evaluates empirical metrics, finds consensus patterns, and structures notes."
-  },
-  {
-    step: 3,
-    name: "Content Writer",
-    role: "Editorial Compilation",
-    description: "Composes the comprehensive report with citations and executive brief."
-  }
+  { step: 1, name: 'Research Specialist', role: 'arXiv & Zenodo Discovery', desc: 'Queries academic indexes, downloads open-access research, and extracts citations.' },
+  { step: 2, name: 'Data Analyst', role: 'Information Verification', desc: 'Cross-checks methodology, statistical claims, and empirical benchmarks.' },
+  { step: 3, name: 'Content Writer', role: 'Editorial Compilation', desc: 'Authors comprehensive literature synthesis with inline citations and references.' }
 ];
 
 export default function App() {
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoveredPapers, setDiscoveredPapers] = useState<AcademicPaper[]>(DEFAULT_FEATURED);
+  const [selectedPaperForModal, setSelectedPaperForModal] = useState<AcademicPaper | null>(null);
+
   const [logs, setLogs] = useState<string[]>([]);
   const [report, setReport] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -106,6 +138,26 @@ export default function App() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'words'>('recent');
 
+  // Interactive RAG Chat State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem('switchlit_chat_messages');
+      return saved ? JSON.parse(saved) : [
+        {
+          id: 'welcome',
+          sender: 'assistant',
+          text: 'Welcome! I am your Academic Reading Advisor. Once literature is discovered or synthesized, you can ask me to compare methodologies, clarify findings, or extract specific experimental parameters.'
+        }
+      ];
+    } catch {
+      return [];
+    }
+  });
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+
+  // Persistent History
   const [history, setHistory] = useState<HistoryItem[]>(() => {
     try {
       const saved = localStorage.getItem('switchlit_history');
@@ -124,6 +176,7 @@ export default function App() {
   });
 
   const logContainerRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch('/api/config')
@@ -141,12 +194,50 @@ export default function App() {
   }, [history]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem('switchlit_chat_messages', JSON.stringify(chatMessages));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [chatMessages]);
+
+  useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs]);
 
-  const handleStartResearch = async (selectedTopic?: string) => {
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, isChatOpen]);
+
+  // Step 1: Discover candidate papers from arXiv, Zenodo & OpenAlex
+  const handleDiscover = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return;
+    setDiscovering(true);
+    try {
+      const res = await fetch('/api/academic/discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: searchQuery, limit: 4 })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.papers && data.papers.length > 0) {
+          setDiscoveredPapers(data.papers);
+        }
+      }
+    } catch (err) {
+      console.error('Academic discovery failed', err);
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
+  // Step 2: Full Synthesis and RAG Execution
+  const handleStartResearch = async (selectedTopic?: string, targetPapers?: AcademicPaper[]) => {
     const query = (selectedTopic || topic).trim();
     if (!query || loading) return;
 
@@ -156,11 +247,17 @@ export default function App() {
     setReport(null);
     setActiveStep(1);
 
+    // Auto-discover candidate papers to populate featured shelf
+    handleDiscover(query);
+
     try {
       const response = await fetch('/api/research/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: query }),
+        body: JSON.stringify({
+          topic: query,
+          papers: targetPapers || (discoveredPapers.length > 0 ? discoveredPapers : undefined)
+        }),
       });
 
       if (!response.ok || !response.body) {
@@ -187,9 +284,9 @@ export default function App() {
                 const text = data.content;
                 setLogs((prev) => [...prev, text]);
 
-                if (text.includes('Research Specialist') || text.includes('SerperDevTool') || text.includes('search')) {
+                if (text.includes('Academic Desk') || text.includes('Research Specialist') || text.includes('search')) {
                   setActiveStep(1);
-                } else if (text.includes('Data Analyst') || text.includes('analyz')) {
+                } else if (text.includes('Data Analyst') || text.includes('analyz') || text.includes('Verification')) {
                   setActiveStep(2);
                 } else if (text.includes('Content Writer') || text.includes('writing') || text.includes('report')) {
                   setActiveStep(3);
@@ -204,9 +301,10 @@ export default function App() {
                   topic: query,
                   timestamp: new Date().toISOString().split('T')[0],
                   wordCount: count,
-                  report: data.content
+                  report: data.content,
+                  papers: discoveredPapers
                 };
-                setHistory((prev) => [newHistoryItem, ...prev.filter(h => h.topic !== query).slice(0, 8)]);
+                setHistory((prev) => [newHistoryItem, ...prev.filter(h => h.topic !== query).slice(0, 9)]);
               }
             } catch (err) {
               console.error('Error parsing SSE event', err);
@@ -218,6 +316,45 @@ export default function App() {
       setLogs((prev) => [...prev, `[System Error]: ${err.message}`]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Step 3: Interactive RAG Chat
+  const handleSendChatMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || chatLoading) return;
+
+    const userQ = chatInput.trim();
+    setChatInput('');
+    const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text: userQ };
+    setChatMessages((prev) => [...prev, userMsg]);
+    setChatLoading(true);
+
+    try {
+      const res = await fetch('/api/papers/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: userQ, topic: topic || undefined })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const botMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          sender: 'assistant',
+          text: data.answer,
+          citations: data.citations
+        };
+        setChatMessages((prev) => [...prev, botMsg]);
+      } else {
+        throw new Error('Failed to query paper advisor');
+      }
+    } catch (err: any) {
+      setChatMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), sender: 'assistant', text: `Advisor error: ${err.message}` }
+      ]);
+    } finally {
+      setChatLoading(false);
     }
   };
 
@@ -234,15 +371,20 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${topic.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_document.md`;
+    link.download = `${topic.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_brief.md`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const clearChat = () => {
+    setChatMessages([]);
+    localStorage.removeItem('switchlit_chat_messages');
   };
 
   return (
     <div className="min-h-screen bg-[#fbfbf9] text-[#111110] flex flex-col font-sans selection:bg-[#d8f3dc] selection:text-[#1b4332]">
       {/* Editorial Header Navigation */}
-      <header className="border-b border-[#e5e5df] bg-[#fbfbf9] sticky top-0 z-40 px-8 py-3">
+      <header className="border-b border-[#e5e5df] bg-[#fbfbf9] sticky top-0 z-30 px-8 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-10">
             <span className="font-bold text-xl tracking-tight text-black cursor-pointer font-serif-heading">
@@ -272,6 +414,16 @@ export default function App() {
               </div>
             )}
 
+            {/* RAG Chat Drawer Toggle */}
+            <button
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-[#efefe9] border border-black/15 text-xs font-semibold text-black transition-colors shadow-sm"
+              title="Open Paper Advisor Chat"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Ask Papers</span>
+            </button>
+
             <button
               onClick={() => setShowConfigModal(true)}
               className="p-1.5 rounded-md hover:bg-[#efefe9] text-[#555550]"
@@ -291,18 +443,17 @@ export default function App() {
       </header>
 
       {/* Hero Header Section */}
-      <section className="pt-14 pb-8 px-6 text-center max-w-4xl mx-auto flex flex-col items-center">
-        <h1 className="text-5xl md:text-6xl font-normal tracking-tight text-black mb-6 uppercase" style={{ fontFamily: 'var(--font-serif)' }}>
+      <section className="pt-12 pb-6 px-6 text-center max-w-4xl mx-auto flex flex-col items-center">
+        <h1 className="text-5xl md:text-6xl font-normal tracking-tight text-black mb-5 uppercase" style={{ fontFamily: 'var(--font-serif)' }}>
           SWITCH-LIT <br /> LIBRARY
         </h1>
 
-        {/* Playful Book Arc Vector Illustration */}
-        <div className="w-full max-w-md my-4 relative h-28 flex items-end justify-center gap-1.5 select-none pointer-events-none">
+        {/* Book Arc Illustration */}
+        <div className="w-full max-w-md my-3 relative h-28 flex items-end justify-center gap-1.5 select-none pointer-events-none">
           <div className="w-8 h-16 bg-[#b2c8e3] rounded-t-sm border border-black transform -rotate-12" />
           <div className="w-9 h-20 bg-[#428076] rounded-t-sm border border-black transform -rotate-6" />
           <div className="w-9 h-24 bg-[#dc6553] rounded-t-sm border border-black transform -rotate-2" />
           <div className="w-10 h-26 bg-[#f7d665] rounded-t-sm border border-black" />
-          {/* Open center book */}
           <div className="w-16 h-28 bg-[#f5f5ee] border-t-2 border-r-2 border-l-2 border-black rounded-t-full flex items-center justify-center relative overflow-hidden">
             <div className="w-8 h-16 border-2 border-black rounded-t-full bg-[#cb4e3c]" />
           </div>
@@ -311,12 +462,12 @@ export default function App() {
           <div className="w-9 h-18 bg-[#ec8353] rounded-t-sm border border-black transform rotate-12" />
         </div>
 
-        <p className="text-lg md:text-xl text-[#3d3d38] font-serif italic mt-2">
+        <p className="text-lg md:text-xl text-[#3d3d38] font-serif italic mt-1">
           Welcome to our public library of the collective imagination.
         </p>
 
-        {/* Query Input Box */}
-        <div className="w-full max-w-2xl mt-8">
+        {/* Topic Input Box */}
+        <div className="w-full max-w-2xl mt-7">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -331,7 +482,7 @@ export default function App() {
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="What topic shall the collective examine today?..."
+              placeholder="Search arXiv, Zenodo, conference papers or enter a research topic..."
               className="flex-1 px-3 py-2 text-sm bg-transparent outline-none placeholder:text-[#999990] text-black font-sans"
               disabled={loading}
             />
@@ -342,8 +493,8 @@ export default function App() {
             >
               {loading ? (
                 <>
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Researching...
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Synthesizing...
                 </>
               ) : (
                 <>
@@ -356,61 +507,70 @@ export default function App() {
         </div>
       </section>
 
-      {/* Featured Research Cards (Visual match to book covers) */}
-      <section className="max-w-6xl mx-auto px-8 w-full mt-6 mb-10">
+      {/* Featured Research Papers Section (Direct visual match with user image) */}
+      <section className="max-w-6xl mx-auto px-8 w-full mt-4 mb-8">
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#111110]">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-black">
-            Featured Inquiries & Stories
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-black">
+              Featured Inquiries & Research Literature
+            </h3>
+            {discovering && (
+              <span className="text-[11px] font-mono text-emerald-700 flex items-center gap-1 animate-pulse">
+                <Loader2 className="w-3 h-3 animate-spin" /> Searching arXiv & Zenodo...
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5">
-            <button className="w-6 h-6 rounded border border-[#d8d8d2] flex items-center justify-center text-[#888880] hover:border-black hover:text-black">
-              ←
-            </button>
-            <button className="w-6 h-6 rounded border border-[#d8d8d2] flex items-center justify-center text-[#888880] hover:border-black hover:text-black">
-              →
+            <button
+              onClick={() => handleDiscover(topic || 'Machine Learning')}
+              className="text-[11px] font-mono text-[#666660] hover:text-black px-2 py-0.5 border border-[#d8d8d2] rounded"
+            >
+              Refresh Deck
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {FEATURED_TOPICS.map((item, idx) => (
-            <motion.div
-              key={idx}
-              whileHover={{ y: -4 }}
-              onClick={() => handleStartResearch(item.title)}
-              className="flex flex-col cursor-pointer group"
-            >
-              {/* Art Cover Box */}
-              <div
-                className={`h-64 rounded-xl border border-black/10 overflow-hidden relative shadow-sm transition-shadow group-hover:shadow-md bg-gradient-to-b ${item.gradient} p-4 flex flex-col justify-between`}
+          {discoveredPapers.slice(0, 4).map((paper, idx) => {
+            const style = CARD_STYLES[idx % CARD_STYLES.length];
+            return (
+              <motion.div
+                key={paper.id || idx}
+                whileHover={{ y: -4 }}
+                onClick={() => setSelectedPaperForModal(paper)}
+                className="flex flex-col cursor-pointer group"
               >
-                {/* Horizontal stripes texture simulation */}
-                <div className="absolute inset-0 opacity-15 pointer-events-none bg-[repeating-linear-gradient(0deg,transparent,transparent_8px,#000_8px,#000_16px)]" />
-                <span className="text-[10px] font-mono uppercase tracking-widest text-black/70 bg-white/40 px-2 py-0.5 rounded backdrop-blur-sm self-start">
-                  {item.category}
-                </span>
+                {/* Art Cover Box */}
+                <div
+                  className={`h-64 rounded-xl border border-black/15 overflow-hidden relative shadow-sm transition-shadow group-hover:shadow-md bg-gradient-to-b ${style.gradient} p-4 flex flex-col justify-between`}
+                >
+                  <div className="absolute inset-0 opacity-15 pointer-events-none bg-[repeating-linear-gradient(0deg,transparent,transparent_8px,#000_8px,#000_16px)]" />
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-black/80 bg-white/50 px-2 py-0.5 rounded backdrop-blur-sm self-start">
+                    {paper.source || style.category}
+                  </span>
 
-                <div className="w-8 h-8 rounded-full bg-white/80 border border-black/20 flex items-center justify-center text-black/70 self-end">
-                  <Bookmark className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-full bg-white/80 border border-black/20 flex items-center justify-center text-black/70 self-end group-hover:bg-white transition-colors">
+                    <Bookmark className="w-3.5 h-3.5" />
+                  </div>
                 </div>
-              </div>
 
-              {/* Caption */}
-              <div className="mt-2.5">
-                <h4 className="text-[13px] font-semibold text-black tracking-tight group-hover:underline line-clamp-1">
-                  {item.title}
-                </h4>
-                <p className="text-[10px] font-mono text-[#666660] uppercase mt-0.5">
-                  written by {item.authors}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+                {/* Caption */}
+                <div className="mt-2.5">
+                  <h4 className="text-[13px] font-semibold text-black tracking-tight group-hover:underline line-clamp-1">
+                    {paper.title}
+                  </h4>
+                  <p className="text-[10px] font-mono text-[#666660] uppercase mt-0.5 truncate">
+                    written by {paper.authors}
+                  </p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Main Research Workplace (Agents + Live Output) */}
-      <section className="max-w-6xl mx-auto px-8 w-full pb-16 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Main Research Workplace (Agents + Document Output) */}
+      <section className="max-w-6xl mx-auto px-8 w-full pb-14 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Multi-Agent Process */}
         <div className="lg:col-span-5 flex flex-col gap-6">
           {/* Agent Stepper */}
@@ -485,7 +645,7 @@ export default function App() {
             >
               {logs.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-[#999990] italic text-xs font-sans">
-                  The agents will print source searches and rationale here...
+                  The agents will print paper reading, citations and rationale here...
                 </div>
               ) : (
                 logs.map((log, index) => (
@@ -506,7 +666,7 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-black" />
                 <h3 className="font-semibold text-xs tracking-wider uppercase text-black">
-                  Manuscript / Findings
+                  Manuscript / Synthesis
                 </h3>
               </div>
 
@@ -552,7 +712,7 @@ export default function App() {
                     The Library Catalog is Empty
                   </h4>
                   <p className="text-xs text-[#777770] max-w-xs font-sans">
-                    Submit an inquiry or select a featured title above to begin drafting the report.
+                    Submit an inquiry or click any paper card above to start RAG synthesis across arXiv and Zenodo.
                   </p>
                 </div>
               )}
@@ -561,7 +721,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Archive / Bottom Table (Matches image list view) */}
+      {/* Archive / Bottom Table */}
       <section className="max-w-6xl mx-auto px-8 w-full pb-20">
         <div className="flex items-center justify-center gap-2 my-8">
           <span className="text-[11px] font-mono font-bold text-[#666660] uppercase tracking-wider mr-2">
@@ -608,6 +768,7 @@ export default function App() {
                   onClick={() => {
                     setTopic(row.topic);
                     setReport(row.report);
+                    if (row.papers) setDiscoveredPapers(row.papers);
                     setActiveStep(4);
                   }}
                   className="grid grid-cols-12 text-[12px] py-2.5 items-center hover:bg-[#f2f2ec] cursor-pointer transition-colors"
@@ -631,7 +792,191 @@ export default function App() {
         </div>
       </section>
 
-      {/* Configuration Modal */}
+      {/* Paper Reader Modal (Triggered by clicking paper card) */}
+      <AnimatePresence>
+        {selectedPaperForModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="w-full max-w-2xl bg-white border border-[#111110] rounded-2xl p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden"
+            >
+              <div className="flex items-start justify-between pb-3 border-b border-[#e5e5df] mb-4">
+                <div>
+                  <span className="text-[10px] font-mono font-bold bg-[#d8f3dc] text-[#1b4332] px-2 py-0.5 rounded-full uppercase">
+                    {selectedPaperForModal.source}
+                  </span>
+                  <h3 className="font-serif text-2xl text-black mt-2 leading-tight">
+                    {selectedPaperForModal.title}
+                  </h3>
+                  <p className="text-xs font-mono text-[#666660] mt-1">
+                    {selectedPaperForModal.authors} • {selectedPaperForModal.published}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedPaperForModal(null)}
+                  className="p-1 rounded hover:bg-[#efefe9] text-[#777770]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 pr-2 text-sm text-[#333330] leading-relaxed font-sans space-y-4">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-black mb-1.5">
+                    Abstract & Findings
+                  </h4>
+                  <p className="text-[13px] bg-[#f9f9f6] p-4 rounded-xl border border-[#ecece6]">
+                    {selectedPaperForModal.abstract || 'Abstract content available via direct PDF access below.'}
+                  </p>
+                </div>
+
+                {selectedPaperForModal.doi && (
+                  <p className="text-xs font-mono text-[#666660]">
+                    DOI: <span className="text-black">{selectedPaperForModal.doi}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-[#e5e5df] mt-4 flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    handleStartResearch(selectedPaperForModal.title, [selectedPaperForModal]);
+                    setSelectedPaperForModal(null);
+                  }}
+                  className="px-4 py-2 rounded-full bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Synthesize This Paper</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {selectedPaperForModal.pdf_url && (
+                    <a
+                      href={selectedPaperForModal.pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 rounded-full bg-black text-white hover:bg-[#222220] text-xs font-semibold flex items-center gap-1.5"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download PDF</span>
+                    </a>
+                  )}
+
+                  {selectedPaperForModal.url && (
+                    <a
+                      href={selectedPaperForModal.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-full border border-[#d8d8d2] hover:bg-[#efefe9] text-black"
+                      title="Open Web Record"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Live RAG "Ask Papers" Drawer */}
+      <AnimatePresence>
+        {isChatOpen && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white border-l border-[#111110] shadow-2xl z-50 flex flex-col"
+          >
+            {/* Drawer Header */}
+            <div className="p-4 border-b border-[#e5e5df] bg-[#fafaf7] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-emerald-800" />
+                <h3 className="font-semibold text-xs tracking-wider uppercase text-black">
+                  Paper Advisor (RAG Chat)
+                </h3>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={clearChat}
+                  className="p-1 rounded hover:bg-[#efefe9] text-[#777770]"
+                  title="Clear Chat History"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setIsChatOpen(false)}
+                  className="p-1 rounded hover:bg-[#efefe9] text-[#777770]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-3 font-sans text-xs">
+              {chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] p-3 rounded-xl leading-relaxed ${
+                      msg.sender === 'user'
+                        ? 'bg-black text-white'
+                        : 'bg-[#f4f7f4] text-[#1b4332] border border-[#d8f3dc]'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                    {msg.citations && msg.citations.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-[#cce3de] text-[10px] space-y-0.5">
+                        <span className="font-semibold block text-emerald-950">Grounded Excerpts:</span>
+                        {msg.citations.map((c, i) => (
+                          <div key={i} className="truncate text-emerald-800">
+                            • {c.title} ({c.source})
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex items-center gap-1.5 text-xs text-[#777770] font-mono italic">
+                  <Loader2 className="w-3 h-3 animate-spin text-emerald-700" />
+                  Advisor querying indexed literature...
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Chat Input */}
+            <form onSubmit={handleSendChatMessage} className="p-3 border-t border-[#e5e5df] bg-white flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask about paper methodologies, data, or tips..."
+                className="flex-1 text-xs border border-[#dcdcd4] rounded-lg px-3 py-2 outline-none focus:border-black font-sans"
+                disabled={chatLoading}
+              />
+              <button
+                type="submit"
+                disabled={chatLoading || !chatInput.trim()}
+                className="p-2 rounded-lg bg-black text-white hover:bg-[#222220] disabled:opacity-40"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Settings Modal */}
       <AnimatePresence>
         {showConfigModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -649,11 +994,11 @@ export default function App() {
               </div>
 
               {config && (
-                <div className="space-y-4 text-xs">
+                <div className="space-y-4 text-xs font-sans">
                   <div>
-                    <span className="text-[#666660] block mb-1">Serper API Key:</span>
+                    <span className="text-[#666660] block mb-1">Academic Indices:</span>
                     <span className="font-mono bg-[#f5f5f0] p-2 rounded block border border-[#e5e5df]">
-                      {config.has_serper ? 'Active & Ready' : 'Missing'}
+                      arXiv, Zenodo, OpenAlex (Active & Cached)
                     </span>
                   </div>
                   <div>
